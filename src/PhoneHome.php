@@ -6,6 +6,7 @@ use Craft;
 use craft\base\Model;
 use craft\base\Plugin;
 use viget\phonehome\models\Settings;
+use viget\phonehome\services\PhoneHomeService;
 
 /**
  * Phone Home plugin
@@ -15,6 +16,7 @@ use viget\phonehome\models\Settings;
  * @author Viget
  * @copyright Viget
  * @license MIT
+ * @property-read PhoneHomeService $phoneHome
  */
 class PhoneHome extends Plugin
 {
@@ -24,9 +26,7 @@ class PhoneHome extends Plugin
     public static function config(): array
     {
         return [
-            'components' => [
-                // Define component configs here...
-            ],
+            'components' => ['phoneHome' => PhoneHomeService::class],
         ];
     }
 
@@ -34,10 +34,16 @@ class PhoneHome extends Plugin
     {
         parent::init();
 
+        // If enabled hasn't been configured, enable for non-devMode environments
+        $enabled = $this->getSettings()->enabled ?? Craft::$app->getConfig()->getGeneral()->devMode === false;
+
+        if (!$enabled) {
+            return;
+        }
+
         // Defer most setup tasks until Craft is fully initialized
         Craft::$app->onInit(function() {
-            $this->attachEventHandlers();
-            // ...
+            $this->phoneHome->tryQueuePhoneHome();
         });
     }
 
@@ -52,11 +58,5 @@ class PhoneHome extends Plugin
             'plugin' => $this,
             'settings' => $this->getSettings(),
         ]);
-    }
-
-    private function attachEventHandlers(): void
-    {
-        // Register event handlers here ...
-        // (see https://craftcms.com/docs/4.x/extend/events.html to get started)
     }
 }

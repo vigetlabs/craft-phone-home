@@ -4,8 +4,8 @@ namespace viget\phonehome\services;
 
 use Craft;
 use craft\helpers\Queue;
+use Illuminate\Support\Collection;
 use viget\phonehome\endpoints\EndpointInterface;
-use viget\phonehome\endpoints\NotionEndpoint;
 use viget\phonehome\jobs\SendPayloadJob;
 use viget\phonehome\models\SitePayload;
 use viget\phonehome\PhoneHome;
@@ -46,21 +46,14 @@ class PhoneHomeService extends Component
 
     public function sendPayload(): void
     {
-        $settings = PhoneHome::getInstance()->getSettings();
+        $endpoints = Collection::make(PhoneHome::getInstance()->getSettings()->endpoints);
 
-        /** @var EndpointInterface[] $endpoints */
-        $endpoints = [];
-
-        // Lays the foundation for being able to configure multiple endpoints
-        if ($settings->getNotion()) {
-            $endpoints[] = new NotionEndpoint($settings->getNotion());
-        }
-
-        foreach (Craft::$app->getSites()->getAllSites() as $site) {
-            $payload = SitePayload::fromSite($site);
-            foreach ($endpoints as $endpoint) {
-                $endpoint->send($payload);
-            }
-        }
+        Collection::make(Craft::$app->getSites()->getAllSites())
+            ->map(SitePayload::fromSite(...))
+            ->each(
+                fn(SitePayload $payload) => $endpoints->each(
+                    fn(EndpointInterface $e) => $e->send($payload)
+                )
+            );
     }
 }

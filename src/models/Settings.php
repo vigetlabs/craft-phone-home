@@ -3,43 +3,21 @@
 namespace viget\phonehome\models;
 
 use craft\base\Model;
+use viget\phonehome\endpoints\EndpointInterface;
 
 /**
  * Phone Home settings
  */
 class Settings extends Model
 {
+    /**
+     * When $enabled is null, it's in "Auto" mode. Which means that phone home
+     * will be disabled in `devMode` but enabled in all other environments.
+     * @var bool|null
+     */
     public ?bool $enabled = null;
 
-    private ?SettingsNotion $_notion = null;
+    /** @var EndpointInterface[] */
+    public array $endpoints = [];
 
-    public function attributes(): array
-    {
-        return [
-            ...parent::attributes(),
-            'notion', // Notion is a getter/setter. Make Yii aware of it
-        ];
-    }
-
-    public function getNotion(): ?SettingsNotion
-    {
-        return $this->_notion;
-    }
-
-    public function setNotion(array $settings): self
-   {
-        $secretKey = $settings['secretKey'] ?? null;
-        $databaseId = $settings['databaseId'] ?? null;
-
-        if (!$secretKey || !$databaseId) {
-            return $this;
-        }
-
-        $this->_notion = new SettingsNotion(
-            secretKey: $secretKey,
-            databaseId: $databaseId,
-        );
-
-        return $this;
-    }
 }

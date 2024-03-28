@@ -25,19 +25,17 @@ class NotionEndpoint implements EndpointInterface
     private const PROPERTY_DATE_UPDATED = "Date Updated";
     private const PROPERTY_TITLE = "Title";
 
-    /**
-     * @param SettingsNotion $settings
-     */
     public function __construct(
-        private SettingsNotion $settings,
+        private readonly string $secret,
+        private readonly string $databaseId,
     )
     {
     }
 
     public function send(SitePayload $payload): void
     {
-        $notion = Notion::create($this->settings->secretKey);
-        $database = $notion->databases()->find($this->settings->databaseId);
+        $notion = Notion::create($this->secret);
+        $database = $notion->databases()->find($this->databaseId);
 
         // Make sure properties are present on page
         // TODO only run if needed

@@ -13,9 +13,12 @@ return [
     // will phone home when Craft is not in devMode
     // 'enabled' => null,
 
-    // Configure the Notion API. If these env vars are not present, the plugin will not send to Endpoint
-    // 'notion' => [
-    //     'secret' => \craft\helpers\App::env('PHONE_HOME_NOTION_SECRET'),
-    //     'databaseId' => \craft\helpers\App::env('PHONE_HOME_NOTION_DATABASE'),
+    // An array of classes that implement the \viget\phonehome\endpoints\EndpointInterface
+    // You may configure as many endpoints as you would like... even of the same class
+    // 'endpoints' => [
+    //     new \viget\phonehome\endpoints\NotionEndpoint(
+    //         secret: \craft\helpers\App::env('PHONE_HOME_NOTION_SECRET'),
+    //         databaseId: \craft\helpers\App::env('PHONE_HOME_NOTION_DATABASE'),
+    //     ),
     // ],
 ];

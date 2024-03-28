@@ -4,7 +4,7 @@
  *
  * This file exists only as a template for Phone Home settings.
  *
- * Copy this file to 'craft/config' as 'phone-home.php'
+ * Copy this file to the 'config' directory as 'phone-home.php'
  * and make your changes there to override default settings.
  */
 

@@ -6,6 +6,7 @@ use Craft;
 use craft\base\PluginInterface;
 use craft\helpers\App;
 use craft\models\Site;
+use Illuminate\Support\Collection;
 use yii\base\Module;
 
 final class SitePayload
@@ -18,7 +19,8 @@ final class SitePayload
         public readonly string $craftVersion,
         public readonly string $phpVersion,
         public readonly string $dbVersion,
-        public readonly string $plugins,
+        /** @var Collection<SitePayloadPlugin> $plugins */
+        public readonly Collection $plugins,
         public readonly string $modules
     )
     {
@@ -33,7 +35,8 @@ final class SitePayload
             craftVersion: App::editionName(Craft::$app->getEdition()),
             phpVersion: App::phpVersion(),
             dbVersion: self::_dbDriver(),
-            plugins: self::_plugins(),
+            plugins: Collection::make(Craft::$app->plugins->getAllPlugins())
+                ->map(SitePayloadPlugin::fromPluginInterface(...)),
             modules: self::_modules()
         );
     }
@@ -54,20 +57,6 @@ final class SitePayload
         }
 
         return $driverName . ' ' . App::normalizeVersion($db->getSchema()->getServerVersion());
-    }
-
-    /**
-     * Returns the list of plugins and versions
-     *
-     * @return string
-     */
-    private static function _plugins(): string
-    {
-        $plugins = Craft::$app->plugins->getAllPlugins();
-
-        return implode(PHP_EOL, array_map(function($plugin) {
-            return "{$plugin->name} ({$plugin->developer}): {$plugin->version}";
-        }, $plugins));
     }
 
     /**

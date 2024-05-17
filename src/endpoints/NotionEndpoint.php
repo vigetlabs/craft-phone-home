@@ -8,9 +8,9 @@ use Notion\Pages\Page;
 use Notion\Pages\PageParent;
 use Notion\Pages\Properties\Date;
 use Notion\Pages\Properties\RichTextProperty;
+use Notion\Pages\Properties\Select;
 use Notion\Pages\Properties\Title;
 use Notion\Pages\Properties\Url;
-use viget\phonehome\models\SettingsNotion;
 use viget\phonehome\models\SitePayload;
 
 class NotionEndpoint implements EndpointInterface
@@ -23,7 +23,7 @@ class NotionEndpoint implements EndpointInterface
     private const PROPERTY_PLUGINS = "Plugins";
     private const PROPERTY_MODULES = "Modules";
     private const PROPERTY_DATE_UPDATED = "Date Updated";
-    private const PROPERTY_TITLE = "Title";
+    private const PROPERTY_NAME = "Name";
 
     public function __construct(
         private readonly string $secret,
@@ -41,10 +41,10 @@ class NotionEndpoint implements EndpointInterface
         // TODO only run if needed
         $database = $database
             ->addProperty(\Notion\Databases\Properties\Url::create(self::PROPERTY_URL))
-            ->addProperty(\Notion\Databases\Properties\RichTextProperty::create(self::PROPERTY_ENVIRONMENT))
-            ->addProperty(\Notion\Databases\Properties\RichTextProperty::create(self::PROPERTY_CRAFT_VERSION))
-            ->addProperty(\Notion\Databases\Properties\RichTextProperty::create(self::PROPERTY_PHP_VERSION))
-            ->addProperty(\Notion\Databases\Properties\RichTextProperty::create(self::PROPERTY_DB_VERSION))
+            ->addProperty(\Notion\Databases\Properties\Select::create(self::PROPERTY_ENVIRONMENT))
+            ->addProperty(\Notion\Databases\Properties\Select::create(self::PROPERTY_CRAFT_VERSION))
+            ->addProperty(\Notion\Databases\Properties\Select::create(self::PROPERTY_PHP_VERSION))
+            ->addProperty(\Notion\Databases\Properties\Select::create(self::PROPERTY_DB_VERSION))
             ->addProperty(\Notion\Databases\Properties\RichTextProperty::create(self::PROPERTY_PLUGINS))
             ->addProperty(\Notion\Databases\Properties\RichTextProperty::create(self::PROPERTY_MODULES))
             ->addProperty(\Notion\Databases\Properties\Date::create(self::PROPERTY_DATE_UPDATED))
@@ -66,12 +66,12 @@ class NotionEndpoint implements EndpointInterface
         $page = $page ?? Page::create($parent);
 
         // Update properties
-        $page = $page->addProperty(self::PROPERTY_TITLE, Title::fromString($payload->siteName))
+        $page = $page->addProperty(self::PROPERTY_NAME, Title::fromString($payload->siteName))
             ->addProperty(self::PROPERTY_URL, Url::create($payload->siteUrl))
-            ->addProperty(self::PROPERTY_ENVIRONMENT, RichTextProperty::fromString($payload->environment))
-            ->addProperty(self::PROPERTY_CRAFT_VERSION, RichTextProperty::fromString($payload->craftVersion))
-            ->addProperty(self::PROPERTY_PHP_VERSION, RichTextProperty::fromString($payload->phpVersion))
-            ->addProperty(self::PROPERTY_DB_VERSION, RichTextProperty::fromString($payload->dbVersion))
+            ->addProperty(self::PROPERTY_ENVIRONMENT, Select::fromName($payload->environment))
+            ->addProperty(self::PROPERTY_CRAFT_VERSION, Select::fromName($payload->craftVersion))
+            ->addProperty(self::PROPERTY_PHP_VERSION, Select::fromName($payload->phpVersion))
+            ->addProperty(self::PROPERTY_DB_VERSION, Select::fromName($payload->dbVersion))
             ->addProperty(self::PROPERTY_PLUGINS, RichTextProperty::fromString($payload->plugins))
             ->addProperty(self::PROPERTY_MODULES, RichTextProperty::fromString($payload->modules))
             ->addProperty(self::PROPERTY_DATE_UPDATED, Date::create(new \DateTimeImmutable('now', new \DateTimeZone('UTC'))))

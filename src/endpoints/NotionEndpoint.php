@@ -2,6 +2,8 @@
 
 namespace viget\phonehome\endpoints;
 
+use DateTimeImmutable;
+use DateTimeZone;
 use Notion\Databases\Query;
 use Notion\Notion;
 use Notion\Pages\Page;
@@ -39,22 +41,65 @@ class NotionEndpoint implements EndpointInterface
     {
         $notion = Notion::create($this->secret);
         $database = $notion->databases()->find($this->databaseId);
+        $existingProperties = $database->properties()->getAll();
+
+        // Checks if a property exists
+        $hasProperty = function (string $handle) use ($existingProperties): bool {
+            return !empty($existingProperties[$handle]);
+        };
+
+        $shouldUpdate = false;
 
         // Make sure properties are present on page
-        // TODO only run if needed
-        $database = $database
-            ->addProperty(\Notion\Databases\Properties\Url::create(self::PROPERTY_URL))
-            ->addProperty(\Notion\Databases\Properties\Select::create(self::PROPERTY_ENVIRONMENT))
-            ->addProperty(\Notion\Databases\Properties\Select::create(self::PROPERTY_CRAFT_VERSION))
-            ->addProperty(\Notion\Databases\Properties\Select::create(self::PROPERTY_PHP_VERSION))
-            ->addProperty(\Notion\Databases\Properties\Select::create(self::PROPERTY_DB_VERSION))
-            ->addProperty(\Notion\Databases\Properties\MultiSelect::create(self::PROPERTY_PLUGINS))
-            ->addProperty(\Notion\Databases\Properties\MultiSelect::create(self::PROPERTY_PLUGIN_VERSIONS))
-            ->addProperty(\Notion\Databases\Properties\RichTextProperty::create(self::PROPERTY_MODULES))
-            ->addProperty(\Notion\Databases\Properties\Date::create(self::PROPERTY_DATE_UPDATED))
-        ;
+        if (!$hasProperty(self::PROPERTY_URL)) {
+            $database = $database->addProperty(\Notion\Databases\Properties\Url::create(self::PROPERTY_URL));
+            $shouldUpdate = true;
+        }
 
-        $notion->databases()->update($database);
+        if (!$hasProperty(self::PROPERTY_URL)) {
+            $database = $database->addProperty(\Notion\Databases\Properties\Select::create(self::PROPERTY_ENVIRONMENT));
+            $shouldUpdate = true;
+        }
+
+        if (!$hasProperty(self::PROPERTY_URL)) {
+            $database = $database->addProperty(\Notion\Databases\Properties\Select::create(self::PROPERTY_CRAFT_VERSION));
+            $shouldUpdate = true;
+        }
+
+        if (!$hasProperty(self::PROPERTY_URL)) {
+            $database = $database->addProperty(\Notion\Databases\Properties\Select::create(self::PROPERTY_PHP_VERSION));
+            $shouldUpdate = true;
+        }
+
+        if (!$hasProperty(self::PROPERTY_URL)) {
+            $database = $database->addProperty(\Notion\Databases\Properties\Select::create(self::PROPERTY_DB_VERSION));
+            $shouldUpdate = true;
+        }
+
+        if (!$hasProperty(self::PROPERTY_URL)) {
+            $database = $database->addProperty(\Notion\Databases\Properties\MultiSelect::create(self::PROPERTY_PLUGINS));
+            $shouldUpdate = true;
+        }
+
+        if (!$hasProperty(self::PROPERTY_URL)) {
+            $database = $database->addProperty(\Notion\Databases\Properties\MultiSelect::create(self::PROPERTY_PLUGIN_VERSIONS));
+            $shouldUpdate = true;
+        }
+
+        if (!$hasProperty(self::PROPERTY_URL)) {
+            $database = $database->addProperty(\Notion\Databases\Properties\RichTextProperty::create(self::PROPERTY_MODULES));
+            $shouldUpdate = true;
+        }
+
+        if (!$hasProperty(self::PROPERTY_URL)) {
+            $database = $database->addProperty(\Notion\Databases\Properties\Date::create(self::PROPERTY_DATE_UPDATED));
+            $shouldUpdate = true;
+        }
+
+        // Only update if properties have changed
+        if ($shouldUpdate) {
+            $notion->databases()->update($database);
+        }
 
         $query = Query::create()
             ->changeFilter(
@@ -83,8 +128,7 @@ class NotionEndpoint implements EndpointInterface
             ->addProperty(self::PROPERTY_PLUGINS, MultiSelect::fromNames(...$plugins))
             ->addProperty(self::PROPERTY_PLUGIN_VERSIONS, MultiSelect::fromNames(...$pluginVersions))
             ->addProperty(self::PROPERTY_MODULES, RichTextProperty::fromString($payload->modules))
-            ->addProperty(self::PROPERTY_DATE_UPDATED, Date::create(new \DateTimeImmutable('now', new \DateTimeZone('UTC'))))
-        ;
+            ->addProperty(self::PROPERTY_DATE_UPDATED, Date::create(new DateTimeImmutable('now', new DateTimeZone('UTC'))));
 
         if ($isCreate) {
             $notion->pages()->create($page);

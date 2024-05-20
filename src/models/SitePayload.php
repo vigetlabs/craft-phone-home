@@ -6,6 +6,7 @@ use Craft;
 use craft\base\PluginInterface;
 use craft\helpers\App;
 use craft\models\Site;
+use Illuminate\Support\Collection;
 use yii\base\Module;
 
 final class SitePayload
@@ -15,25 +16,40 @@ final class SitePayload
         public readonly string $siteUrl,
         public readonly string $siteName,
         public readonly string $environment,
+        /** @var string $craftEdition - Solo, Team, Pro, etc */
+        public readonly string $craftEdition,
+        /** @var string The version number */
         public readonly string $craftVersion,
         public readonly string $phpVersion,
         public readonly string $dbVersion,
-        public readonly string $plugins,
-        public readonly string $modules
+        /** @var Collection<int,SitePayloadPlugin> $plugins */
+        public readonly Collection $plugins,
+        /** @var Collection<int,string> $modules */
+        public readonly Collection $modules
     )
     {
     }
 
     public static function fromSite(Site $site): self
     {
+        $siteUrl = $site->getBaseUrl();
+        $environment = Craft::$app->env;
+
+        if (!$siteUrl || !$environment) {
+           throw new \Exception('$siteUrl or $environment not found');
+        }
+
         return new self(
-            siteUrl: $site->getBaseUrl(),
+            siteUrl: $siteUrl,
             siteName: $site->name,
-            environment: Craft::$app->env,
-            craftVersion: App::editionName(Craft::$app->getEdition()),
+            environment: $environment,
+            craftEdition: App::editionName(Craft::$app->getEdition()),
+            craftVersion: App::normalizeVersion(Craft::$app->getVersion()),
             phpVersion: App::phpVersion(),
             dbVersion: self::_dbDriver(),
-            plugins: self::_plugins(),
+            plugins: Collection::make(Craft::$app->plugins->getAllPlugins())
+                ->map(SitePayloadPlugin::fromPluginInterface(...))
+                ->values(),
             modules: self::_modules()
         );
     }
@@ -57,25 +73,11 @@ final class SitePayload
     }
 
     /**
-     * Returns the list of plugins and versions
-     *
-     * @return string
-     */
-    private static function _plugins(): string
-    {
-        $plugins = Craft::$app->plugins->getAllPlugins();
-
-        return implode(PHP_EOL, array_map(function($plugin) {
-            return "{$plugin->name} ({$plugin->developer}): {$plugin->version}";
-        }, $plugins));
-    }
-
-    /**
      * Returns the list of modules
      *
-     * @return string
+     * @return Collection<int,string>
      */
-    private static function _modules(): string
+    private static function _modules(): Collection
     {
         $modules = [];
 
@@ -93,7 +95,8 @@ final class SitePayload
             }
         }
 
-        return implode(PHP_EOL, $modules);
+        // ->values() forces a 0 indexed array
+        return Collection::make($modules)->values();
     }
 
 }

@@ -4,6 +4,7 @@ namespace viget\phonehome\services;
 
 use Craft;
 use craft\helpers\Queue;
+use craft\web\Request;
 use Illuminate\Support\Collection;
 use viget\phonehome\endpoints\EndpointInterface;
 use viget\phonehome\jobs\SendPayloadJob;
@@ -29,13 +30,13 @@ class PhoneHomeService extends Component
             Craft::$app->getIsInstalled() === false
             || Craft::$app->getRequest()->getIsConsoleRequest()
             || !Craft::$app->getRequest()->getIsCpRequest() // Only run on CP request
-            || $request->getIsAjax()
+            || $request instanceof Request && $request->getIsAjax()
         ) {
             return;
         }
 
         // Only run when the cache is empty (once per day at most)
-        if (Craft::$app->getCache()->get(self::CACHE_KEY) !== false) {
+        if (Craft::$app->getCache()?->get(self::CACHE_KEY) !== false) {
             return;
         }
 

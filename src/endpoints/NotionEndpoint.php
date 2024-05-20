@@ -29,6 +29,7 @@ class NotionEndpoint implements EndpointInterface
 {
     private const PROPERTY_URL = "Url";
     private const PROPERTY_ENVIRONMENT = "Environment";
+    private const PROPERTY_CRAFT_EDITION = "Craft Edition";
     private const PROPERTY_CRAFT_VERSION = "Craft Version";
     private const PROPERTY_PHP_VERSION = "PHP Version";
     private const PROPERTY_DB_VERSION = "DB Version";
@@ -48,6 +49,9 @@ class NotionEndpoint implements EndpointInterface
             'class' => UrlDb::class,
         ],
         self::PROPERTY_ENVIRONMENT => [
+            'class' => SelectDb::class,
+        ],
+        self::PROPERTY_CRAFT_EDITION => [
             'class' => SelectDb::class,
         ],
         self::PROPERTY_CRAFT_VERSION => [
@@ -160,6 +164,7 @@ class NotionEndpoint implements EndpointInterface
         $page = $page->addProperty(self::PROPERTY_NAME, Title::fromString($payload->siteName))
             ->addProperty(self::PROPERTY_URL, Url::create($payload->siteUrl))
             ->addProperty(self::PROPERTY_ENVIRONMENT, Select::fromName($payload->environment))
+            ->addProperty(self::PROPERTY_CRAFT_EDITION, Select::fromName($payload->craftEdition))
             ->addProperty(self::PROPERTY_CRAFT_VERSION, Select::fromName($payload->craftVersion))
             ->addProperty(self::PROPERTY_PHP_VERSION, Select::fromName($payload->phpVersion))
             ->addProperty(self::PROPERTY_DB_VERSION, Select::fromName($payload->dbVersion))

@@ -18,7 +18,6 @@ use Notion\Pages\Page;
 use Notion\Pages\PageParent;
 use Notion\Pages\Properties\Date;
 use Notion\Pages\Properties\MultiSelect;
-use Notion\Pages\Properties\RichTextProperty;
 use Notion\Pages\Properties\Select;
 use Notion\Pages\Properties\Title;
 use Notion\Pages\Properties\Url;
@@ -85,36 +84,6 @@ class NotionEndpoint implements EndpointInterface
     }
 
     /**
-     * @param string $propertyName
-     * @param class-string<PropertyInterface> $propertyClass
-     * @param Database $database Pass by reference because there's some immutable stuff going on in the Notion lib
-     * @return bool True if property was created
-     * @throws Exception
-     */
-    private function createProperty(string $propertyName, string $propertyClass, Database &$database): bool
-    {
-        $existingProperties = $database->properties()->getAll();
-
-        // Don't create a property if it already exists
-        if (!empty($existingProperties[$propertyName])) {
-            return false;
-        }
-
-        // If you're using a class that isn't in this list, most likely the ::create
-        // method is compatible. But it's worth double-checking.
-        $database = match ($propertyClass) {
-            UrlDb::class,
-            SelectDb::class,
-            MultiSelectDb::class,
-            RichTextDb::class,
-            DateDb::class => $database->addProperty($propertyClass::create($propertyName)),
-            default => throw new Exception("createProperty doesnt support the class $propertyClass. Double check that its ::create method is compatible and add to this method")
-        };
-
-        return true;
-    }
-
-    /**
      * @throws Exception
      */
     public function send(SitePayload $payload): void
@@ -125,7 +94,7 @@ class NotionEndpoint implements EndpointInterface
         // Loop through property config and create properties that don't exist on the DB
         $updated = false;
         foreach (self::PROPERTY_CONFIG as $propertyName => $config) {
-            $didUpdate = $this->createProperty(
+            $didUpdate = $this->configureProperty(
                 $propertyName,
                 $config['class'],
                 $database
@@ -177,5 +146,36 @@ class NotionEndpoint implements EndpointInterface
         } else {
             $notion->pages()->update($page);
         }
+    }
+
+    /**
+     * @param string $propertyName
+     * @param class-string<PropertyInterface> $propertyClass
+     * @param Database $database Pass by reference because there's some immutable stuff going on in the Notion lib
+     * @return bool True if property was created
+     * @throws Exception
+     */
+    private function configureProperty(string $propertyName, string $propertyClass, Database &$database): bool
+    {
+        $existingProperties = $database->properties()->getAll();
+        $existingProperty = $existingProperties[$propertyName] ?? null;
+
+        // Don't configure a property if it already exists and has same type
+        if ($existingProperty && $existingProperty::class === $propertyClass) {
+            return false;
+        }
+
+        // If you're using a class that isn't in this list, most likely the ::create
+        // method is compatible. But it's worth double-checking.
+        $database = match ($propertyClass) {
+            UrlDb::class,
+            SelectDb::class,
+            MultiSelectDb::class,
+            RichTextDb::class,
+            DateDb::class => $database->addProperty($propertyClass::create($propertyName)),
+            default => throw new Exception("createProperty doesnt support the class $propertyClass. Double check that its ::create method is compatible and add to this method")
+        };
+
+        return true;
     }
 }

@@ -40,8 +40,6 @@ class PhoneHome extends Plugin
         // If enabled hasn't been configured, enable for non-devMode environments
         $enabled = $this->getSettings()->enabled ?? Craft::$app->getConfig()->getGeneral()->devMode === false;
 
-        $this->phoneHome->sendPayload();
-
         if (!$enabled) {
             return;
         }

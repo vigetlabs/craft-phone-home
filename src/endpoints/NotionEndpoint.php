@@ -70,7 +70,7 @@ class NotionEndpoint implements EndpointInterface
             'class' => MultiSelectDb::class,
         ],
         self::PROPERTY_MODULES => [
-            'class' => RichTextDb::class,
+            'class' => MultiSelectDb::class,
         ],
         self::PROPERTY_DATE_UPDATED => [
             'class' => DateDb::class,
@@ -157,9 +157,8 @@ class NotionEndpoint implements EndpointInterface
         $page = $page ?? Page::create($parent);
 
         // Update properties
-
-        $plugins = $payload->plugins->map(fn(SitePayloadPlugin $plugin) => $plugin->id)->values()->all();
-        $pluginVersions = $payload->plugins->map(fn(SitePayloadPlugin $plugin) => $plugin->versionedId)->values()->all();
+        $plugins = $payload->plugins->map(fn(SitePayloadPlugin $plugin) => $plugin->id)->all();
+        $pluginVersions = $payload->plugins->map(fn(SitePayloadPlugin $plugin) => $plugin->versionedId)->all();
 
         $page = $page->addProperty(self::PROPERTY_NAME, Title::fromString($payload->siteName))
             ->addProperty(self::PROPERTY_URL, Url::create($payload->siteUrl))
@@ -170,7 +169,7 @@ class NotionEndpoint implements EndpointInterface
             ->addProperty(self::PROPERTY_DB_VERSION, Select::fromName($payload->dbVersion))
             ->addProperty(self::PROPERTY_PLUGINS, MultiSelect::fromNames(...$plugins))
             ->addProperty(self::PROPERTY_PLUGIN_VERSIONS, MultiSelect::fromNames(...$pluginVersions))
-            ->addProperty(self::PROPERTY_MODULES, RichTextProperty::fromString($payload->modules))
+            ->addProperty(self::PROPERTY_MODULES, MultiSelect::fromNames(...$payload->modules->all()))
             ->addProperty(self::PROPERTY_DATE_UPDATED, Date::create(new DateTimeImmutable('now', new DateTimeZone('UTC'))));
 
         if ($isCreate) {

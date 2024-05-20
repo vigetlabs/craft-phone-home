@@ -23,6 +23,9 @@ class PhoneHome extends Plugin
     public string $schemaVersion = '1.0.0';
     public bool $hasCpSettings = true;
 
+    /**
+     * @phpstan-ignore-next-line
+     */
     public static function config(): array
     {
         return [
